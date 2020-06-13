@@ -14,6 +14,9 @@
 
 using namespace image_add;
 
+// #pragma comment(lib,"zlibstat.lib")
+// #pragma comment(lib,"jpeglib.lib")
+
 imagedata::imagedata(void) {
 	width=0;
 	height=0;

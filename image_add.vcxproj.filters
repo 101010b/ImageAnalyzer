@@ -100,8 +100,4 @@
       <Filter>Resource Files</Filter>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Library Include="..\..\auxlibs\zlib-1.2.8\zlibstat.lib" />
-    <Library Include="..\..\auxlibs\jpeg-9\Debug\libjpg9.lib" />
-  </ItemGroup>
 </Project>
