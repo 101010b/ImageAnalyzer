@@ -2795,72 +2795,92 @@ array<double> ^cprofile::getprofile() {
 	e=gcnew array<double>(prf->pts);
 	switch (prsrc) {
 	case ProfileSource::WeightedRGBSum:
-		for (int i=0;i<prf->pts;i++) {
-			e[i]=(double) prf->R[i]*scaler+prf->R[i]*scaleg+prf->B[i]*scaleb;
+		for (int i = 0; i < prf->pts; i++) {
+			e[i] = (double)prf->R[i] * scaler + prf->R[i] * scaleg + prf->B[i] * scaleb;
 		}
 		break;
 	case ProfileSource::Red:
-		for (int i=0;i<prf->pts;i++) {
-			e[i]=(double) prf->R[i];
+		for (int i = 0; i < prf->pts; i++) {
+			e[i] = (double)prf->R[i];
 		}
 		break;
 	case ProfileSource::Green:
-		for (int i=0;i<prf->pts;i++) {
-			e[i]=(double) prf->G[i];
+		for (int i = 0; i < prf->pts; i++) {
+			e[i] = (double)prf->G[i];
 		}
 		break;
 	case ProfileSource::Blue:
-		for (int i=0;i<prf->pts;i++) {
-			e[i]=(double) prf->B[i];
+		for (int i = 0; i < prf->pts; i++) {
+			e[i] = (double)prf->B[i];
 		}
 		break;
 	case ProfileSource::Cyan:
-		for (int i=0;i<prf->pts;i++) {
-			e[i]=(double) 1.0 - prf->R[i];
+		for (int i = 0; i < prf->pts; i++) {
+			e[i] = (double) 1.0 - prf->R[i];
 		}
 		break;
 	case ProfileSource::Magenta:
-		for (int i=0;i<prf->pts;i++) {
-			e[i]=(double) 1.0 - prf->G[i];
+		for (int i = 0; i < prf->pts; i++) {
+			e[i] = (double) 1.0 - prf->G[i];
 		}
 		break;
 	case ProfileSource::Yellow:
-		for (int i=0;i<prf->pts;i++) {
-			e[i]=(double) 1.0 - prf->B[i];
+		for (int i = 0; i < prf->pts; i++) {
+			e[i] = (double) 1.0 - prf->B[i];
 		}
 		break;
 	case ProfileSource::Hue:
-		for (int i=0;i<prf->pts;i++) {
+		for (int i = 0; i < prf->pts; i++) {
 			double H, S, L;
-			getHSLfromRGB(prf->R[i],prf->G[i],prf->B[i],&H,&S,&L);
-			e[i]=(double)H;
+			getHSLfromRGB(prf->R[i], prf->G[i], prf->B[i], &H, &S, &L);
+			e[i] = (double)H;
 		}
 		// unfold
-		offs=0;
-		for (int i=1;i<prf->pts;i++) {
-			double d1=fabs(e[i]-(e[i-1]-offs));
-			double d2=fabs(e[i]+1.0-(e[i-1]-offs));
-			double d3=fabs(e[i]-1.0-(e[i-1]-offs));
+		offs = 0;
+		for (int i = 1; i < prf->pts; i++) {
+			double d1 = fabs(e[i] - (e[i - 1] - offs));
+			double d2 = fabs(e[i] + 1.0 - (e[i - 1] - offs));
+			double d3 = fabs(e[i] - 1.0 - (e[i - 1] - offs));
 			if ((d2 < d1) && (d2 < d3)) {
-				offs+=1.0;
-			} else if ((d3 < d1) && (d3 < d2)) {
-				offs-=1.0;
+				offs += 1.0;
 			}
-			e[i]+=offs;
+			else if ((d3 < d1) && (d3 < d2)) {
+				offs -= 1.0;
+			}
+			e[i] += offs;
 		}
 		break;
 	case ProfileSource::Saturation:
-		for (int i=0;i<prf->pts;i++) {
+		for (int i = 0; i < prf->pts; i++) {
 			double H, S, L;
-			getHSLfromRGB(prf->R[i],prf->G[i],prf->B[i],&H,&S,&L);
-			e[i]=(double)S;
+			getHSLfromRGB(prf->R[i], prf->G[i], prf->B[i], &H, &S, &L);
+			e[i] = (double)S;
 		}
 		break;
 	case ProfileSource::Lightness:
-		for (int i=0;i<prf->pts;i++) {
+		for (int i = 0; i < prf->pts; i++) {
 			double H, S, L;
-			getHSLfromRGB(prf->R[i],prf->G[i],prf->B[i],&H,&S,&L);
-			e[i]=(double)L;
+			getHSLfromRGB(prf->R[i], prf->G[i], prf->B[i], &H, &S, &L);
+			e[i] = (double)L;
+		}
+		break;
+	case ProfileSource::ColorVal:
+		for (int i = 0; i < prf->pts; i++) {
+			int valvalid = 1;
+			double colval = 0;
+			if (c->cbar == nullptr) valvalid = 0;
+			if (valvalid && (c->cbar->prf == nullptr)) valvalid = 0;
+			if (valvalid) {
+				double colrel = c->cbar->prf->findcolor(prf->R[i], prf->G[i], prf->B[i]);
+				if (colrel >= 0) {
+					colval = c->cbar->v1 + (colrel - c->cbar->o1) / (c->cbar->o2 - c->cbar->o1)*(c->cbar->v2 - c->cbar->v1);
+				}
+				else valvalid = 0;
+			}
+			if (valvalid)
+				e[i] = colval;
+			else
+				e[i] = 0;
 		}
 		break;
 	}
@@ -3585,6 +3605,8 @@ void ccircle3p::ccircle3p_default() {
 	radphi=M_PI/2;
 	drawrefpoints=1;
 	showradline=1;
+	showdiameter = 0;
+	showfullcircle = 0;
 
 //	LineCol=Color::FromArgb(255,255,0);
 //	fnt=gcnew System::Drawing::Font(FontFamily::GenericSansSerif,8.0F,FontStyle::Regular);
@@ -3663,6 +3685,8 @@ void ccircle3p::update_from_template(cmeasurement ^templ) {
 //	LineCol=templ->LineCol;
 	drawrefpoints=((ccircle3p^)templ)->drawrefpoints;
 	showradline=((ccircle3p^)templ)->showradline;
+	showdiameter= ((ccircle3p^)templ)->showdiameter;
+	showfullcircle = ((ccircle3p^)templ)->showfullcircle;
 //	fnt=gcnew Font(templ->fnt,templ->fnt->Style);
 }
 
@@ -3748,18 +3772,30 @@ void ccircle3p::draw(Graphics ^g){
 		double dphi2=minangulardiff(ph3,ph2);
 		// double dphi3=minangulardiff(ph3,ph1);
 
-		for (int i=0;i<36;i++) {
-			double phi1,phi2;
-			phi1=(double)i/36*dphi1+ph1;
-			phi2=(double)(i+1)/36*dphi1+ph1;
-			vector v1=c->t->toscreen(c->c->getdata(center->real+vector(cos(phi1),sin(phi1))*rad));
-			vector v2=c->t->toscreen(c->c->getdata(center->real+vector(cos(phi2),sin(phi2))*rad));
-			drawline(g,v1,v2,pen);
-			phi1=(double)i/36*dphi2+ph2;
-			phi2=(double)(i+1)/36*dphi2+ph2;
-			v1=c->t->toscreen(c->c->getdata(center->real+vector(cos(phi1),sin(phi1))*rad));
-			v2=c->t->toscreen(c->c->getdata(center->real+vector(cos(phi2),sin(phi2))*rad));
-			drawline(g,v1,v2,pen);
+		if (showfullcircle) {
+			for (int i = 0; i < 72; i++) {
+				double phi1, phi2;
+				phi1 = (double)i / 72 * 2*M_PI;
+				phi2 = (double)(i + 1) / 72 * 2 * M_PI;
+				vector v1 = c->t->toscreen(c->c->getdata(center->real + vector(cos(phi1), sin(phi1))*rad));
+				vector v2 = c->t->toscreen(c->c->getdata(center->real + vector(cos(phi2), sin(phi2))*rad));
+				drawline(g, v1, v2, pen);
+			}
+		}
+		else {
+			for (int i = 0; i < 36; i++) {
+				double phi1, phi2;
+				phi1 = (double)i / 36 * dphi1 + ph1;
+				phi2 = (double)(i + 1) / 36 * dphi1 + ph1;
+				vector v1 = c->t->toscreen(c->c->getdata(center->real + vector(cos(phi1), sin(phi1))*rad));
+				vector v2 = c->t->toscreen(c->c->getdata(center->real + vector(cos(phi2), sin(phi2))*rad));
+				drawline(g, v1, v2, pen);
+				phi1 = (double)i / 36 * dphi2 + ph2;
+				phi2 = (double)(i + 1) / 36 * dphi2 + ph2;
+				v1 = c->t->toscreen(c->c->getdata(center->real + vector(cos(phi1), sin(phi1))*rad));
+				v2 = c->t->toscreen(c->c->getdata(center->real + vector(cos(phi2), sin(phi2))*rad));
+				drawline(g, v1, v2, pen);
+			}
 		}
 
 		//SolidBrush ^fb=gcnew SolidBrush(fntcol);
@@ -3773,10 +3809,18 @@ void ccircle3p::draw(Graphics ^g){
 		drawline(g,bx,bx+vx*20,pen);
 		drawline(g,bx,bx+vx*5+vy*5,pen);
 		drawline(g,bx,bx+vx*5-vy*5,pen);
-		if (name->Length > 0)
-			drawtxt(g,bx+vx*20,vx,-1,0,name + " = " + c->f->format(rad));
-		else
-			drawtxt(g,bx+vx*20,vx,-1,0,"R = " + c->f->format(rad));
+		if (showdiameter) {
+			if (name->Length > 0)
+				drawtxt(g, bx + vx * 20, vx, -1, 0, name + " = " + c->f->format(2*rad));
+			else
+				drawtxt(g, bx + vx * 20, vx, -1, 0, "D = " + c->f->format(2*rad));
+		}
+		else {
+			if (name->Length > 0)
+				drawtxt(g, bx + vx * 20, vx, -1, 0, name + " = " + c->f->format(rad));
+			else
+				drawtxt(g, bx + vx * 20, vx, -1, 0, "R = " + c->f->format(rad));
+		}
 
 		if (showradline) {
 			drawtickline(g, center->real, v, pen, 1, nullptr);
@@ -3912,7 +3956,9 @@ void ccircle3p::write_to_xml(ia_xml_write ^x) {
 	
 	x->write_value("PHI",radphi);
 	x->write_value("DRAWREFPOINTS",drawrefpoints);
-	x->write_value("SHOWRADLINE",showradline);
+	x->write_value("SHOWRADLINE", showradline);
+	x->write_value("SHOWDIAMETER", showdiameter);
+	x->write_value("SHOWFULLCIRCLE", showfullcircle);
 
 }
 
@@ -3939,8 +3985,12 @@ int ccircle3p::read_from_xml(ia_xml_read ^x) {
 		radphi=x->ReadElementContentAsDouble();
 	} else if (String::Compare(x->Name,"DRAWREFPOINTS")==0) {
 		drawrefpoints=x->ReadElementContentAsInt();
-	} else if (String::Compare(x->Name,"SHOWRADLINE")==0) {
-		showradline=x->ReadElementContentAsInt();
+	} else if (String::Compare(x->Name, "SHOWRADLINE") == 0) {
+		showradline = x->ReadElementContentAsInt();
+	} else if (String::Compare(x->Name, "SHOWDIAMETER") == 0) {
+		showdiameter = x->ReadElementContentAsInt();
+	} else if (String::Compare(x->Name, "SHOWFULLCIRCLE") == 0) {
+		showfullcircle = x->ReadElementContentAsInt();
 	} else return 0;
 	return 1;
 }

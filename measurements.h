@@ -756,7 +756,8 @@ namespace image_add {
 		Yellow,
 		Hue,
 		Saturation,
-		Lightness
+		Lightness,
+		ColorVal
 	};
 
 	public enum class ProfileFilter {
@@ -1158,6 +1159,8 @@ namespace image_add {
 
 		int drawrefpoints;
 		int showradline;
+		int showdiameter;
+		int showfullcircle;
 
 		//double offset;
 
@@ -1228,6 +1231,18 @@ namespace image_add {
 	property bool ShowRadialLine {
 		bool get(void) { return (showradline)?true:false; }
 		void set(bool srl) { showradline=(srl)?1:0; }
+	}
+
+	[CategoryAttribute("Appearance")]
+	property bool ShowDiameter {
+		bool get(void) { return (showdiameter) ? true : false; }
+		void set(bool val) { showdiameter = (val) ? 1 : 0; }
+	}
+
+	[CategoryAttribute("Appearance")]
+	property bool ShowFullCircle {
+		bool get(void) { return (showfullcircle) ? true : false; }
+		void set(bool val) { showfullcircle = (val) ? 1 : 0; }
 	}
 
 	[CategoryAttribute("Appearance")]
